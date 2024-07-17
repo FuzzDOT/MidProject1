@@ -24,10 +24,15 @@ splash.title("Loading...")
 splash.geometry("400x400")  # Adjusted geometry to fit both image and progress bar
 
 # Load and display the image
-image_path = r"C:\Users\fuzzi\Desktop\AI MethA+ Workspace\Midterm\MidProject\src\ai.jpg"
+image_path = r"C:\Users\fuzzi\Downloads\MidProject\MidProject1\src\ai.jpg"
 if os.path.exists(image_path):
     img = Image.open(image_path)
-    img = img.resize((400, 200), Image.LANCZOS)  # Resize image as needed
+    img = img.resize((400, 300), Image.LANCZOS)  # Resize image as needed
+
+    # Create a Tkinter label and display the image
+    photo = ImageTk.PhotoImage(img)
+    label = tk.Label(splash, image=photo)
+    label.pack()
 
 # Progress bar setup
 progress_var = tk.IntVar()
@@ -69,12 +74,12 @@ def process_message(chat_display, entry):
     
     if message.lower() == "done":
         if model and X_pca is not None:
-            chat_display.insert(tk.END, "Cluster 1:\n")
+            chat_display.insert(tk.END, "Cluster 1: Cultural and Artistic Heritage:\n")
             for i, label in enumerate(model.labels_silhouette):
                 if label == 0:
                     chat_display.insert(tk.END, f"{urls[i]}\n")
             
-            chat_display.insert(tk.END, "\nCluster 2:\n")
+            chat_display.insert(tk.END, "\nCluster 2: Symbols of Peace and Historical Commemoration\n")
             for i, label in enumerate(model.labels_silhouette):
                 if label == 1:
                     chat_display.insert(tk.END, f"{urls[i]}\n")
@@ -107,6 +112,9 @@ def display_graphs():
         os.system(f"start {fig2}")
     if os.path.exists(fig3):
         os.system(f"start {fig3}")
+
+def label_data(): 
+    return
 
 # Function to fit model and update progress bar
 def fit_model(progress_callback):
@@ -152,6 +160,7 @@ def fit_model(progress_callback):
     model = KMeans_Model()
     model.fit_silhouette_analysis(X_pca)
     model.fit_elbow_analysis(X_pca)
+
     
     fig = px.scatter(x=X_pca[:, 0], y=X_pca[:, 1], color=model.labels_silhouette)
     # path1 = ".."
