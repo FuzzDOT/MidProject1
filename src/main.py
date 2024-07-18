@@ -101,6 +101,41 @@ def process_message(chat_display, entry):
         chat_display.insert(tk.END, f"You: {message}\n\n")
     
     entry.delete(0, tk.END)
+    
+def inference(url, lda_model, num_topics, corpus, dictionary):
+    scraper = DataScraper(url)
+    scraper.fetch_content()
+    scraper.parse_content()
+    scraper.retrieve_data()
+    data = scraper.text
+    
+    Preprocess = Preprocessing()
+    Preprocess.preprocess(data)
+    preprocessed_text = ' '.join(Preprocess.tokens)
+    
+    new_text_bow = dictionary.doc2bow(preprocessed_text.split())
+    new_text_topics = lda_model.get_document_topics(new_text_bow, minimum_probability=0.0)
+    
+    from scipy.spatial.distance import jensenshannon
+    min_distance = float('inf')
+    assigned_cluster = None
+    for cluster_id in range(num_topics):
+        cluster_topic_dist = lda_model.get_document_topics(corpus[cluster_id], minimum_probability=0.0)
+        cluster_topic_dist_dict = {topic_id: prob for topic_id, prob in cluster_topic_dist}
+        new_text_topic_dist_dict = {topic_id: prob for topic_id, prob in new_text_topics}
+        
+        # Convert to lists with same order of topics
+        cluster_topic_probs = [cluster_topic_dist_dict.get(i, 0) for i in range(num_topics)]
+        new_text_topic_probs = [new_text_topic_dist_dict.get(i, 0) for i in range(num_topics)]
+        
+        # Calculate Jensen-Shannon distance
+        distance = jensenshannon(cluster_topic_probs, new_text_topic_probs)
+        
+        if distance < min_distance:
+            min_distance = distance
+            assigned_cluster = cluster_id
+            
+    return assigned_cluster
 
 # Function to display graphs
 def display_graphs():
@@ -201,6 +236,9 @@ def fit_model(progress_callback):
         cluster_labels.append(dominant_topic)
 
     print(cluster_labels)
+    
+    print(inference('https://www.un.org/ungifts/dodo', lda_model, model.clusters_elbow, corpus, dictionary))
+    
     
     ####################
     ####################
