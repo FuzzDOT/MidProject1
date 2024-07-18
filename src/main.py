@@ -10,6 +10,8 @@ from preprocessing.preprocessing import Preprocessing
 from preprocessing.featureExtraction import WordEmbeddings_Handler
 from preprocessing.dimensionality_reduction import PCA_Handler
 from model.kmeans_model import KMeans_Model
+from gensim import corpora
+from gensim.models import LdaModel
 
 # Global variables to store the results
 processed_X = None
@@ -120,7 +122,7 @@ def label_data():
 def fit_model(progress_callback):
     global processed_X, X_embeddings, X_pca, model, urls
     gifts_df = pd.read_csv(r"src\list_gifts_un_complete.csv")
-    urls = gifts_df['URL']
+    urls = gifts_df['URL'][:10]
     
     X = []
     for i, url in enumerate(urls):
@@ -133,10 +135,13 @@ def fit_model(progress_callback):
         progress_callback(int((i / len(urls)) * 20))
     
     processed_X = []
+    non_tokenized_X = []
     for i, text in enumerate(X):
         Preprocess = Preprocessing()
         tokens = Preprocess.preprocess(text)
-        processed_X.append(tokens)
+        tokenized_data = Preprocess.tokens
+        processed_X.append(tokenized_data)
+        non_tokenized_X.append(' '.join(tokenized_data))
         progress_callback(20 + int((i / len(X)) * 20))
         
     TextEmbedder = WordEmbeddings_Handler()
@@ -160,6 +165,46 @@ def fit_model(progress_callback):
     model = KMeans_Model()
     model.fit_silhouette_analysis(X_pca)
     model.fit_elbow_analysis(X_pca)
+    
+    
+    ####################x   
+    ####################
+    ####################
+     
+
+    # Group texts by clusters
+    clusters = model.elbow_predicted_clusters
+    
+    clustered_texts = {i: [] for i in range(model.clusters_elbow)}
+    for idx, cluster in enumerate(clusters):
+        clustered_texts[cluster].append(non_tokenized_X[idx])
+        
+    
+    cluster_documents = [' '.join(texts) for texts in clustered_texts.values()]
+
+    # Create a dictionary and corpus for each cluster
+    dictionary = corpora.Dictionary([doc.split() for doc in cluster_documents])
+    corpus = [dictionary.doc2bow(doc.split()) for doc in cluster_documents]
+
+    # Apply LDA
+    lda_model = LdaModel(corpus, num_topics=model.clusters_elbow, id2word=dictionary, passes=15)
+
+    # Get the topics
+    topics = lda_model.print_topics(num_words=4)
+    for topic in topics:
+        print(topic)
+        
+    cluster_labels = []
+    for i in range(model.clusters_elbow):
+        topics_per_cluster = lda_model.get_document_topics(corpus[i])
+        dominant_topic = max(topics_per_cluster, key=lambda x: x[1])[0]
+        cluster_labels.append(dominant_topic)
+
+    print(cluster_labels)
+    
+    ####################
+    ####################
+    ####################
 
     
     fig = px.scatter(x=X_pca[:, 0], y=X_pca[:, 1], color=model.labels_silhouette)
