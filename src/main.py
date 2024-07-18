@@ -76,12 +76,12 @@ def process_message(chat_display, entry):
     
     if message.lower() == "done":
         if model and X_pca is not None:
-            chat_display.insert(tk.END, "Cluster 1: Cultural and Artistic Heritage:\n")
+            chat_display.insert(tk.END, "Cluster 1: {Cluster Name1}\n")
             for i, label in enumerate(model.labels_silhouette):
                 if label == 0:
                     chat_display.insert(tk.END, f"{urls[i]}\n")
             
-            chat_display.insert(tk.END, "\nCluster 2: Symbols of Peace and Historical Commemoration\n")
+            chat_display.insert(tk.END, "\nCluster 2: {Cluster Name2}\n")
             for i, label in enumerate(model.labels_silhouette):
                 if label == 1:
                     chat_display.insert(tk.END, f"{urls[i]}\n")
@@ -157,7 +157,7 @@ def label_data():
 def fit_model(progress_callback):
     global processed_X, X_embeddings, X_pca, model, urls
     gifts_df = pd.read_csv(r"src\list_gifts_un_complete.csv")
-    urls = gifts_df['URL'][:10]
+    urls = gifts_df['URL']
     
     X = []
     for i, url in enumerate(urls):
