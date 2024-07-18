@@ -36,6 +36,7 @@ class KMeans_Model:
         self.best_silhouette_score = -1
         self.labels_silhouette = None
         self.labels_elbow = None
+        self.elbow_predicted_clusters = None
         
     def fit_silhouette_analysis(self, X):
         """
@@ -97,6 +98,7 @@ class KMeans_Model:
         model = KMeans(n_clusters=self.clusters_elbow, n_init=10, max_iter=300)
         model.fit(X)
         self.labels_elbow = model.labels_
+        self.elbow_predicted_clusters = model.fit_predict(X)
         
         # path1 = ".."
         # path2 = "visualizations"
